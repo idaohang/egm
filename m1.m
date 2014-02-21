@@ -13,7 +13,7 @@ clear global all; close all;
 global tau delta beta alpha;
 gSize = 1000;
 options = optimset('Display','off');
-relativeKss = 0.75; % Range limits relative to capital stock steady-state
+relativeKss = 0.5; % Range limits relative to capital stock steady-state
 DispEveryIter = 50;
 MaxIt = 10000; % Maximum number of iterations in EGM
 % parameters
@@ -65,6 +65,7 @@ Vend1 = Yend;
 Vn1 = Vn;
 while normi>tolerance && iter<MaxIt ;
   iter = iter + 1;
+  % step 2
   % Derivatives at grid points; glumsy implementation
   D = zeros(gSize,zStates);
   D(1,:)=(Vn(2,:)-Vn(1,:))/kStep;
@@ -73,11 +74,13 @@ while normi>tolerance && iter<MaxIt ;
 		D(i,:) = (Vn(i+1,:)-Vn(i-1,:))/(2*kStep);
   end;
   Cstar = D.^(-1/tau);
+  % step 3
   Vend = (1/(1-tau))*Cstar.^(1-tau) + Vn;
   for i = 1:zStates
     Yend(:,i) = Cstar(:,i) + Gk1';
     Vend1(:,i) = interpol(Yend(:,i),Vend(:,i),cih(:,i));
   end;
+  % step 4
   for i = 1:gSize % this could be vectorized too
     for j = 1:zStates
       Vn1(i,j) = beta.*piz(j,:)*Vend1(i,:)';
@@ -86,10 +89,10 @@ while normi>tolerance && iter<MaxIt ;
   normi = norm(Vn1-Vn);
   Vn = Vn1;
   if mod(iter,DispEveryIter) == 0
-    fprintf(1,'Iteration %4.0f with norm %12.6e\n',iter,normi);
+    fprintf(1,'Iteration %4.0f with the norm %12.6e\n',iter,normi);
   end;
 end;
-fprintf(1,'Iteration converged with %4.0f iterations and the norm %12.6e\n',iter,normi);
+fprintf(1,'Iteration converged after %4.0f iterations and with the norm %12.6e\n',iter,normi);
 %% calculate k_t 
 kend = Yend; % just initialize
 k0 = [Gk1(1) Gk1(1)];
@@ -111,10 +114,10 @@ fig = plot(kend(:,1),[kend(:,1) Gk1']);
 fig = title('K(t)and K(t+1) in boom');
 xlabel('k(t)');
 ylabel('k(t+1)');
-legend({'45°','k(t+1)'});
+legend({'45?','k(t+1)'});
 fig = figure;
 fig = plot(kend(:,2),[kend(:,2) Gk1']);
 title('K(t)and K(t+1) in recession');
 xlabel('k(t)');
 ylabel('k(t+1)');
-legend({'45°','k(t+1)'});
+legend({'45?','k(t+1)'});
